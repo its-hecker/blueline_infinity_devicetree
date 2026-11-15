@@ -1,0 +1,78 @@
+name: Import and adapt Pixel 3 device tree
+on:
+  push:
+    paths:
+      - '.github/workflows/import-lineage.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import LineageOS 24.0 Pixel 3 device source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -f AndroidProducts.mk; then
+            echo "Device source already imported; refusing to overwrite."
+            exit 0
+          fi
+          git remote add source https://github.com/its-hecker/android_device_google_crosshatch.git
+          git fetch --no-tags --depth=1 source refs/heads/lineage-24.0
+          git checkout FETCH_HEAD -- .
+          cat >> AndroidProducts.mk <<'EOF'
+
+          # Infinity-X Pixel 3 product
+          PRODUCT_MAKEFILES += $(LOCAL_DIR)/infinity_blueline.mk
+          COMMON_LUNCH_CHOICES += infinity_blueline-cp2a-userdebug
+          EOF
+          cat > infinity_blueline.mk <<'EOF'
+          # SPDX-License-Identifier: Apache-2.0
+          # Project Infinity-X 17 / Google Pixel 3 (blueline)
+          INFINITY_MAINTAINER := Hecker
+          WITH_GAPPS ?= false
+          TARGET_HAS_UDFPS := false
+          TARGET_FACE_UNLOCK_SUPPORTED := false
+
+          # Development-only ADB flag (secure ADB for public builds).
+          PIXEL3_DEV_USB_ADB ?= $(if $(filter userdebug eng,$(TARGET_BUILD_VARIANT)),true,false)
+          ifeq ($(strip $(PIXEL3_DEV_USB_ADB)),true)
+          ifeq ($(filter userdebug eng,$(TARGET_BUILD_VARIANT)),)
+          $(error PIXEL3_DEV_USB_ADB=true requires userdebug or eng)
+          endif
+          WITH_ADB_INSECURE := true
+          endif
+
+          $(call inherit-product, vendor/infinity/config/common_full_phone.mk)
+          $(call inherit-product, device/google/crosshatch/aosp_blueline.mk)
+          include device/google/crosshatch/blueline/device-lineage.mk
+          include device/google/crosshatch/development/adb.mk
+
+          PRODUCT_BRAND := google
+          PRODUCT_MANUFACTURER := Google
+          PRODUCT_MODEL := Pixel 3
+          PRODUCT_NAME := infinity_blueline
+          PRODUCT_DEVICE := blueline
+
+          TARGET_SCREEN_HEIGHT := 2160
+          TARGET_SCREEN_WIDTH := 1080
+
+          PRODUCT_BUILD_PROP_OVERRIDES += \
+              BuildDesc="blueline-user 12 SP1A.210812.016.C2 8618562 release-keys" \
+              BuildFingerprint=google/blueline/blueline:12/SP1A.210812.016.C2/8618562:user/release-keys \
+              DeviceProduct=blueline
+
+          PRODUCT_PRODUCT_PROPERTIES += \
+              ro.product.marketname=Google\\ Pixel\\ 3 \
+              ro.infinity.soc=Snapdragon\\ 845 \
+              ro.infinity.camera=12.2MP
+
+          $(call inherit-product, vendor/google/blueline/blueline-vendor.mk)
+          EOF
+          git add -A
+          git config user.name "Hecker"
+          git config user.email "noreply@github.com"
+          git commit -m "Import Android 17 Pixel 3 tree and add Infinity-X product"
+          git push origin HEAD:main

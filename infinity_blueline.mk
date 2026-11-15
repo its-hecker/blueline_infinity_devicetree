@@ -12,6 +12,12 @@ ifeq ($(filter userdebug eng,$(TARGET_BUILD_VARIANT)),)
 $(error PIXEL3_DEV_USB_ADB=true requires userdebug or eng)
 endif
 WITH_ADB_INSECURE := true
+# Prevent Infinity-X from disabling ro.debuggable on this diagnostic userdebug.
+PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false
+else ifeq ($(strip $(PIXEL3_DEV_USB_ADB)),false)
+WITH_ADB_INSECURE :=
+else
+$(error PIXEL3_DEV_USB_ADB must be true or false)
 endif
 
 $(call inherit-product, vendor/infinity/config/common_full_phone.mk)

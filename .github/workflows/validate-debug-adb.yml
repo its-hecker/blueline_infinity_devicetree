@@ -26,7 +26,7 @@ jobs:
           dev = Path('device.mk').read_text()
           assert 'WITH_ADB_INSECURE := true' in product
           assert 'PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false' in product
-          assert 'PIXEL3_DEV_USB_ADB=true requires a userdebug or eng build' in product
+          assert 'PIXEL3_DEV_USB_ADB=true requires userdebug or eng' in product, 'missing debug-only build guard'
           assert 'vendor/infinity/config/common_full_phone.mk' in product
           assert product.index('WITH_ADB_INSECURE := true') < product.index('vendor/infinity/config/common_full_phone.mk')
           assert 'persist.sys.usb.config=adb' in adb

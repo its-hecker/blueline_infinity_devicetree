@@ -33,9 +33,9 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
     BuildFingerprint=google/blueline/blueline:12/SP1A.210812.016.C2/8618562:user/release-keys \
     DeviceProduct=blueline
 
+# Keep makefile properties as single tokens; PRODUCT_MODEL provides "Pixel 3".
 PRODUCT_PRODUCT_PROPERTIES += \
-    ro.product.marketname=Google\ Pixel\ 3 \
-    ro.infinity.soc=Snapdragon\ 845 \
+    ro.infinity.soc=SDM845 \
     ro.infinity.camera=12.2MP
 
 $(call inherit-product, vendor/google/blueline/blueline-vendor.mk)

@@ -34,8 +34,8 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
     DeviceProduct=blueline
 
 PRODUCT_PRODUCT_PROPERTIES += \
-    ro.product.marketname=Google\\ Pixel\\ 3 \
-    ro.infinity.soc=Snapdragon\\ 845 \
+    ro.product.marketname=Google\ Pixel\ 3 \
+    ro.infinity.soc=Snapdragon\ 845 \
     ro.infinity.camera=12.2MP
 
 $(call inherit-product, vendor/google/blueline/blueline-vendor.mk)

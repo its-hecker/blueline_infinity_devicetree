@@ -1,0 +1,51 @@
+name: Validate Pixel 3 diagnostic ADB
+on:
+  push:
+    paths:
+      - 'infinity_blueline.mk'
+      - 'development/adb.mk'
+      - 'init.hardware.usb.rc'
+      - '.github/workflows/validate-debug-adb.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check debug-build gating and USB root init ordering
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          product = Path('infinity_blueline.mk').read_text()
+          adb = Path('development/adb.mk').read_text()
+          usb = Path('init.hardware.usb.rc').read_text()
+          dev = Path('device.mk').read_text()
+          assert 'WITH_ADB_INSECURE := true' in product
+          assert 'PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false' in product
+          assert 'PIXEL3_DEV_USB_ADB=true requires a userdebug or eng build' in product
+          assert 'vendor/infinity/config/common_full_phone.mk' in product
+          assert product.index('WITH_ADB_INSECURE := true') < product.index('vendor/infinity/config/common_full_phone.mk')
+          assert 'persist.sys.usb.config=adb' in adb
+          assert 'ro.vendor.pixel3.early_adb=1' in adb
+          assert 'init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.$(PRODUCT_PLATFORM).usb.rc' in dev
+          required = [
+              'on post-fs && property:ro.vendor.pixel3.early_adb=1 && property:ro.debuggable=1 && property:ro.adb.secure=0',
+              'mount configfs none /config',
+              'mount functionfs adb /dev/usb-ffs/adb',
+              'setprop service.adb.root 1',
+              'setprop sys.usb.configfs 1',
+              'setprop sys.usb.config adb',
+              'on early-boot && property:ro.vendor.pixel3.early_adb=1',
+              'on boot && property:ro.vendor.pixel3.early_adb=1',
+          ]
+          for expected in required:
+              assert expected in usb, f'Missing early debugging configuration: {expected}'
+          event = usb.split('on post-fs && property:ro.vendor.pixel3.early_adb=1',1)[1].split('\non ',1)[0]
+          assert event.index('setprop service.adb.root 1') < event.index('setprop sys.usb.config adb')
+          print('Pixel 3 userdebug USB ADB, root and early configfs wiring: PASS')
+          print('Note: CI cannot verify that early ADB enumerates on actual hardware.')
+          PY

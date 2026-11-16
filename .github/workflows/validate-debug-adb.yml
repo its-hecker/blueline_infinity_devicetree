@@ -32,8 +32,9 @@ jobs:
           assert ':$(TARGET_COPY_OUT_VENDOR)/ueventd.rc' not in dev
           assert '/dev/citadel0' in ueventd
           assert '/dev/qseecom' in ueventd
-          assert 'ro.hardware.hwcomposer=qcom' in dev
-          assert 'on property:bpf.progs_loaded=1' in Path('init.hardware.rc').read_text()
+          assert 'ro.hardware.hwcomposer=qcom' not in dev, 'post-first-boot HWC selector is still present'
+          assert 'on property:bpf.progs_loaded=1' not in Path('init.hardware.rc').read_text(), 'post-first-boot netd startup override remains'
+          assert '$(call soong_config_set_bool,libui,legacy_gralloc,true)' in device_lineage
           assert 'PIXEL3_ENABLE_LIVEDISPLAY ?= false' in device_lineage
           assert 'ifeq ($(PIXEL3_ENABLE_LIVEDISPLAY),true)' in device_lineage
           assert 'PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false' in product

@@ -54,6 +54,9 @@ $(call soong_config_set_bool,livedisplay_sdm,enable_dm,false)
 $(call soong_config_set_bool,livedisplay_sdm,enable_pa,true)
 endif
 
+# Preserve the legacy SDM845 gralloc mapper used by the first bootable Pixel 3 build.
+$(call soong_config_set_bool,libui,legacy_gralloc,true)
+
 # Parts
 PRODUCT_PACKAGES += \
     GoogleParts
